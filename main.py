@@ -78,41 +78,49 @@ try:
 except Exception as e:
     add_log(f"❌ Gemini Client Error: {e}")
 
+# --- মডেলের লিস্ট (শক্তিশালী থেকে সাধারণ) ---
+MODEL_HIERARCHY = [
+    "gemini-3-pro-preview",         # 1. সবচেয়ে শক্তিশালী (Gemini 3)
+    "gemini-2.5-pro-preview-06-05", # 2. দ্বিতীয় শক্তিশালী (Gemini 2.5 Pro)
+    "gemini-2.0-pro-exp-02-05",     # 3. তৃতীয় শক্তিশালী (Gemini 2.0 Pro)
+    "gemini-2.0-flash"              # 4. ফলব্যাক/দ্রুত (Gemini 2.0 Flash)
+]
+
 def generate_gemini_reply(comment_text):
     """
-    Gemini 3 চেষ্টা করবে, না পারলে 2.0 Flash ব্যবহার করবে।
+    ধারাবাহিকভাবে ৪টি মডেল চেষ্টা করবে।
     রিটার্ন করবে: (reply_text, model_name)
     """
     
-    # সিস্টেম ইন্সট্রাকশনে মডেলের পরিচয় দিয়ে দিচ্ছি যাতে সে কনফিউজড না হয়
-    system_instruction = """You are a helpful AI assistant for a Facebook Page, powered by Google's advanced Gemini 3 model. 
-Reply to this comment in Bengali. Be friendly, human-like, and keep it within 1-2 sentences.
-If asked about your identity, you can proudly say you are running on Gemini AI.
+    system_instruction = """You are a helpful AI assistant for a Facebook Page. 
+Reply to this comment in Bengali. Be friendly, human-like, and keep it concise (1-2 sentences).
 If someone asks about price, politely say 'Please inbox us for pricing details'."""
 
-    # ১. প্রথমে Gemini 3.0 বা Experimental মডেল চেষ্টা করি
-    try:
-        target_model = "gemini-3-pro-preview" # আপনার দেওয়া মডেল নাম
-        response = client.models.generate_content(
-            model=target_model,
-            contents=f"{system_instruction}\nUser Comment: {comment_text}"
-        )
-        # সফল হলে রিপ্লাই এবং মডেলের নাম ফেরত পাঠাবে
-        return response.text.strip(), target_model
-    
-    except Exception as e:
-        # ২. যদি ৩.০ ফেইল করে (API error বা access না থাকলে), ফ্ল্যাশ ব্যবহার হবে
-        # add_log(f"⚠️ Gemini 3 Error: {e}. Switching to Flash.") 
+    last_error = ""
+
+    # লুপের মাধ্যমে একটার পর একটা মডেল ট্রাই করবে
+    for model_name in MODEL_HIERARCHY:
         try:
-            fallback_model = "gemini-2.0-flash"
+            # add_log(f"🔄 Trying model: {model_name}...") # (অপশনাল লগ, চাইলে চালু করতে পারেন)
+            
             response = client.models.generate_content(
-                model=fallback_model, 
+                model=model_name,
                 contents=f"{system_instruction}\nUser Comment: {comment_text}"
             )
-            return response.text.strip(), fallback_model
-        except Exception as e2:
-            add_log(f"❌ All Gemini Models Failed: {e2}")
-            return "ধন্যবাদ আপনার মন্তব্যের জন্য! 😊", "Error-Fallback"
+            
+            if response.text:
+                # সফল হলে লুপ ব্রেক করে রিপ্লাই রিটার্ন করবে
+                return response.text.strip(), model_name
+            
+        except Exception as e:
+            # ফেইল করলে লগ রেখে পরের মডেলে যাবে
+            last_error = str(e)
+            add_log(f"⚠️ {model_name} Failed. Switching to next...")
+            continue
+
+    # যদি ৪টা মডেলই ফেইল করে
+    add_log(f"❌ All 4 Models Failed! Last Error: {last_error}")
+    return "ধন্যবাদ আপনার মন্তব্যের জন্য! 😊", "System-Fallback"
 
 def post_reply_to_comment(comment_id, reply_text):
     url = f"https://graph.facebook.com/v21.0/{comment_id}/comments"
@@ -136,8 +144,8 @@ def run_bot_loop():
         add_log("⚠️ পোস্ট আইডি নেই, বট কাজ করবে না।")
         return
 
-    add_log(f"🚀 Intelligent Bot Started! Monitoring: {FULL_POST_ID}")
-    add_log("waiting for new comments...")
+    add_log(f"🚀 Intelligent Multi-Model Bot Started! Monitoring: {FULL_POST_ID}")
+    add_log(f"🧠 Active Models Hierarchy: {MODEL_HIERARCHY}")
     
     while True:
         try:
@@ -164,16 +172,16 @@ def run_bot_loop():
                     if is_comment_processed(c_id):
                         continue
                     
-                    add_log(f"✨ New Comment: {c_msg[:20]}...")
+                    add_log(f"✨ New Comment: {c_msg[:30]}...")
                     
                     # রিপ্লাই এবং মডেলের নাম রিসিভ করছি
                     reply_text, used_model = generate_gemini_reply(c_msg)
                     
                     if post_reply_to_comment(c_id, reply_text):
-                        # কনসোলে মডেলের নামসহ লগ দেখাবে
-                        add_log(f"✅ [{used_model}] Replied: {reply_text[:20]}...")
+                        # কনসোলে মডেলের নামসহ লগ দেখাবে (যেমন: [gemini-3-pro-preview] Replied...)
+                        add_log(f"✅ [{used_model}] Replied: {reply_text[:30]}...")
                         mark_comment_as_processed(c_id)
-                        time.sleep(5)
+                        time.sleep(5) # স্প্যামিং এড়াতে বিরতি
                     
             else:
                 add_log(f"❌ Facebook API Error: {resp.text}")
