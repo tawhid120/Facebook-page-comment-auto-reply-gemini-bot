@@ -4,363 +4,221 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tawhid's AI Console</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
+        body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
             font-family: 'Inter', sans-serif;
-            overflow: hidden;
+            color: #e2e8f0;
         }
-
-        /* Animated Gradient Background */
-        .animated-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Floating Particles */
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            animation: float 20s infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) translateX(50px) scale(1.5); opacity: 0; }
-        }
-
-        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
-        .particle:nth-child(2) { width: 60px; height: 60px; left: 25%; animation-delay: 3s; }
-        .particle:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-delay: 6s; }
-        .particle:nth-child(4) { width: 70px; height: 70px; left: 70%; animation-delay: 9s; }
-        .particle:nth-child(5) { width: 90px; height: 90px; left: 85%; animation-delay: 12s; }
 
         /* Glassmorphism Card */
         .glass-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 
-                0 8px 32px 0 rgba(31, 38, 135, 0.37),
-                inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Gradient Text */
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        /* Custom Scrollbar for Console */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Log Animations */
+        .log-entry {
+            font-family: 'JetBrains Mono', monospace;
+            animation: slideIn 0.3s ease-out forwards;
+            border-left: 2px solid transparent;
+            padding-left: 8px;
+            margin-bottom: 2px;
+            opacity: 0;
+        }
+        .log-entry:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Text Gradient */
+        .text-gradient {
+            background: linear-gradient(to right, #60a5fa, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 8s ease infinite;
-            background-size: 200% 200%;
         }
 
-        /* Neon Glow Effect */
-        .neon-glow {
-            box-shadow: 
-                0 0 5px rgba(102, 126, 234, 0.5),
-                0 0 20px rgba(102, 126, 234, 0.3),
-                0 0 40px rgba(102, 126, 234, 0.2);
+        /* Status Pulse */
+        .status-dot {
+            box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            animation: pulse-green 2s infinite;
         }
-
-        /* Gradient Buttons */
-        .gradient-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .gradient-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .gradient-btn:hover::before {
-            left: 100%;
-        }
-
-        .gradient-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        .gradient-btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        /* Log Entry Animation */
-        .log-entry {
-            animation: slideInRight 0.4s ease-out;
-            padding: 8px 12px;
-            border-left: 3px solid transparent;
-            border-radius: 4px;
-            margin-bottom: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .log-entry:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateX(4px);
-        }
-
-        @keyframes slideInRight {
-            from { 
-                opacity: 0; 
-                transform: translateX(-20px); 
-            }
-            to { 
-                opacity: 1; 
-                transform: translateX(0); 
-            }
-        }
-
-        /* Custom Scrollbar */
-        #console-box::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #console-box::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-
-        #console-box::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 10px;
-        }
-
-        #console-box::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-
-        /* Pulsing Animation */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Spinning Animation */
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .spin {
-            animation: spin 3s linear infinite;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        /* Header Gradient */
-        .header-gradient {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Info Section Gradient */
-        .info-gradient {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(240, 147, 251, 0.15) 100%);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Console Background */
-        .console-bg {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(30, 30, 60, 0.4) 100%);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Traffic Light Buttons */
-        .traffic-light {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px currentColor;
-        }
-
-        /* Icon Rotation */
-        .rotate-icon {
-            animation: spin 2s linear infinite;
-        }
-
-        /* Font Mono */
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Glow Text */
-        .glow-text {
-            text-shadow: 0 0 10px rgba(102, 126, 234, 0.8),
-                         0 0 20px rgba(102, 126, 234, 0.6),
-                         0 0 30px rgba(102, 126, 234, 0.4);
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
         }
     </style>
 </head>
-<body class="animated-bg h-screen flex flex-col items-center justify-center p-4 relative">
+<body class="h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
 
-    <!-- Floating Particles -->
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-
-    <!-- Main Container -->
-    <div class="w-full max-w-5xl glass-card neon-glow rounded-2xl overflow-hidden flex flex-col h-[90vh] transform transition-all duration-500 hover:scale-[1.01]">
+    <div class="w-full max-w-5xl h-[90vh] flex flex-col glass-card rounded-2xl overflow-hidden">
         
-        <!-- Header -->
-        <div class="header-gradient p-5 flex justify-between items-center border-b border-white/10">
+        <div class="bg-gray-900/50 px-6 py-4 flex justify-between items-center border-b border-white/10">
             <div class="flex items-center gap-4">
                 <div class="flex gap-2">
-                    <span class="traffic-light bg-red-500"></span>
-                    <span class="traffic-light bg-yellow-500"></span>
-                    <span class="traffic-light bg-green-500"></span>
+                    <div class="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition shadow-lg shadow-red-500/20"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 transition shadow-lg shadow-yellow-500/20"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600 transition shadow-lg shadow-green-500/20"></div>
                 </div>
-                <div class="h-6 w-px bg-white/20"></div>
-                <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 tracking-wider text-lg glow-text">
-                    ⚡ GEMINI AI MODELS
-                </span>
+                <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+                <span class="font-bold text-sm tracking-widest text-gray-400 uppercase">Bot Control Panel</span>
             </div>
-            <div class="flex items-center gap-3">
-                <span class="status-badge px-4 py-1.5 rounded-full text-white text-xs font-bold flex items-center gap-2 shadow-lg">
-                    <i class="fa-solid fa-circle text-[6px]"></i>
-                    ONLINE
-                </span>
-                <i class="fa-solid fa-satellite-dish text-green-400 rotate-icon text-lg"></i>
+
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                <div class="w-2 h-2 rounded-full bg-green-400 status-dot"></div>
+                <span class="text-xs font-bold text-green-400">SYSTEM ONLINE</span>
             </div>
         </div>
 
-        <!-- Info & Links -->
-        <div class="info-gradient p-8 text-center border-b border-white/10">
-            <h1 class="text-4xl font-extrabold gradient-text mb-2 tracking-tight">
-                Tawhid's AI Agent
-            </h1>
-            <p class="text-sm text-gray-200/80 mb-6 font-medium">
-                ⚡ Powered by Google GenAI SDK • Real-time Intelligence
-            </p>
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
             
-            <div class="flex justify-center gap-4 flex-wrap">
-                <a href="https://www.facebook.com/profile.php?id={{ page_id }}" target="_blank" 
-                   class="gradient-btn px-6 py-3 rounded-xl text-sm font-bold text-white shadow-xl flex items-center gap-2 transform transition">
-                   <i class="fab fa-facebook-f"></i>
-                   Facebook Page
-                </a>
-                <a href="https://github.com/tawhid120" target="_blank" 
-                   class="gradient-btn gradient-btn-secondary px-6 py-3 rounded-xl text-sm font-bold text-white shadow-xl flex items-center gap-2 transform transition">
-                   <i class="fab fa-github"></i>
-                   GitHub Repo
-                </a>
-            </div>
-        </div>
+            <div class="md:w-1/3 p-6 bg-gray-900/30 border-r border-white/5 flex flex-col justify-between">
+                <div>
+                    <h1 class="text-3xl font-extrabold mb-2 text-gradient">Tawhid's AI</h1>
+                    <p class="text-sm text-gray-400 mb-8 leading-relaxed">
+                        Gemini 2.0 Flash powered automated response system.
+                        <br>Monitoring Facebook comments in real-time.
+                    </p>
 
-        <!-- Live Console -->
-        <div class="flex-1 p-6 overflow-hidden flex flex-col console-bg">
-            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-green-400 pulse"></div>
-                    <span class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 uppercase tracking-wider">
-                        System Logs
-                    </span>
+                    <div class="space-y-3">
+                        <a href="https://www.facebook.com/profile.php?id={{ page_id }}" target="_blank" 
+                           class="flex items-center justify-between px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg group transition-all">
+                            <span class="text-sm font-semibold text-blue-300 group-hover:text-white">Facebook Page</span>
+                            <i class="fa-brands fa-facebook text-blue-400 group-hover:scale-110 transition"></i>
+                        </a>
+                        
+                        <a href="https://github.com/tawhid120" target="_blank" 
+                           class="flex items-center justify-between px-4 py-3 bg-gray-700/30 hover:bg-gray-700/40 border border-gray-600/30 rounded-lg group transition-all">
+                            <span class="text-sm font-semibold text-gray-300 group-hover:text-white">GitHub Repo</span>
+                            <i class="fa-brands fa-github text-gray-400 group-hover:scale-110 transition"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="text-xs text-gray-300/60 flex items-center gap-2 font-mono">
-                    <i class="fa-solid fa-sync rotate-icon text-[10px]"></i>
-                    Auto-refreshing every 2s
-                </div>
-            </div>
-            
-            <div id="console-box" class="flex-1 overflow-y-auto font-mono text-sm space-y-1 pr-2">
-                <div class="text-gray-400 log-entry border-l-blue-400">
-                    <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>
-                    Initializing connection to server...
-                </div>
-            </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="header-gradient px-6 py-3 border-t border-white/10 flex justify-between items-center text-xs text-gray-300/80">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved text-green-400"></i>
-                <span class="font-mono">Secure Connection</span>
+                <div class="text-xs text-gray-600 mt-6">
+                    <p>Server: Render Cloud</p>
+                    <p>Database: MongoDB Atlas</p>
+                    <p class="mt-2 opacity-50">v3.0.0 Stable Build</p>
+                </div>
             </div>
-            <div class="font-mono">
-                <span class="text-gray-400">v2.0.1</span>
+
+            <div class="flex-1 flex flex-col bg-[#0c0c0c] relative">
+                <div class="px-4 py-2 bg-[#1a1a1a] flex justify-between items-center border-b border-white/5">
+                    <div class="text-xs text-gray-500 font-mono">
+                        <i class="fa-solid fa-terminal mr-2"></i>root@tawhid-bot:~/logs
+                    </div>
+                    <div class="text-[10px] text-gray-600 flex gap-2">
+                        <span><i class="fa-solid fa-clock mr-1"></i>Auto-sync</span>
+                    </div>
+                </div>
+
+                <div id="console-box" class="flex-1 overflow-y-auto p-4 custom-scrollbar font-mono text-xs sm:text-sm space-y-1">
+                    <div class="text-gray-500 italic">Connecting to secure websocket...</div>
+                    <div class="text-gray-500 italic">Waiting for incoming data streams...</div>
+                </div>
+                
+                <div class="h-1 w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-50"></div>
             </div>
         </div>
     </div>
 
     <script>
+        const consoleBox = document.getElementById('console-box');
+        
         function fetchLogs() {
             fetch('/api/logs')
                 .then(response => response.json())
                 .then(data => {
-                    const consoleBox = document.getElementById('console-box');
+                    // Clear previous logs
                     consoleBox.innerHTML = ''; 
                     
                     if(data.length === 0) {
-                        consoleBox.innerHTML = `
-                            <div class="text-gray-400 log-entry border-l-yellow-400">
-                                <i class="fa-solid fa-clock mr-2"></i>
-                                Waiting for logs...
-                            </div>
-                        `;
+                        consoleBox.innerHTML = '<div class="text-gray-500 p-2">No logs available yet...</div>';
                         return;
                     }
 
                     data.forEach(log => {
                         const div = document.createElement('div');
-                        div.className = 'log-entry';
+                        div.className = 'log-entry flex items-start gap-2';
                         
+                        // Icon selection based on log type
+                        let icon = '<i class="fa-solid fa-angle-right text-gray-600 mt-1 text-[10px]"></i>';
+                        let textColor = 'text-gray-300';
+                        let borderStyle = '';
+
                         if(log.includes('❌')) {
-                            div.className += ' text-red-400 border-l-red-500 bg-red-500/5';
-                        } else if(log.includes('✅')) {
-                            div.className += ' text-green-400 font-semibold border-l-green-500 bg-green-500/5';
-                        } else if(log.includes('✨')) {
-                            div.className += ' text-yellow-300 border-l-yellow-500 bg-yellow-500/5';
-                        } else if(log.includes('🔍')) {
-                            div.className += ' text-blue-400 border-l-blue-500 bg-blue-500/5';
-                        } else {
-                            div.className += ' text-gray-300 border-l-gray-600';
+                            textColor = 'text-red-400';
+                            icon = '<i class="fa-solid fa-circle-xmark text-red-500 mt-1"></i>';
+                            div.style.background = 'rgba(248, 113, 113, 0.05)';
+                        }
+                        else if(log.includes('✅')) {
+                            textColor = 'text-emerald-400 font-semibold';
+                            icon = '<i class="fa-solid fa-circle-check text-emerald-500 mt-1"></i>';
+                        }
+                        else if(log.includes('✨')) {
+                            textColor = 'text-amber-300';
+                            icon = '<i class="fa-solid fa-star text-amber-400 mt-1"></i>';
+                        }
+                        else if(log.includes('🚀')) {
+                            textColor = 'text-blue-400 font-bold';
+                            icon = '<i class="fa-solid fa-rocket text-blue-500 mt-1"></i>';
+                            div.style.borderBottom = '1px solid rgba(59, 130, 246, 0.2)';
+                            div.style.paddingBottom = '4px';
+                            div.style.marginBottom = '8px';
+                        }
+                        else if(log.includes('🔍')) {
+                            textColor = 'text-cyan-300';
+                            icon = '<i class="fa-solid fa-magnifying-glass text-cyan-400 mt-1"></i>';
                         }
 
-                        div.textContent = log;
+                        div.innerHTML = `
+                            <span class="shrink-0 opacity-80 w-5 text-center">${icon}</span>
+                            <span class="${textColor} break-words leading-relaxed">${log}</span>
+                        `;
                         consoleBox.appendChild(div);
                     });
 
-                    // Auto-scroll to bottom
+                    // Auto scroll to bottom just like a real terminal
                     consoleBox.scrollTop = consoleBox.scrollHeight;
-                });
+                })
+                .catch(err => console.error("Log fetch error:", err));
         }
-        
-        setInterval(fetchLogs, 2000);
+
+        // Fetch immediately and then every 2 seconds
         fetchLogs();
+        setInterval(fetchLogs, 2000);
     </script>
 </body>
 </html>
