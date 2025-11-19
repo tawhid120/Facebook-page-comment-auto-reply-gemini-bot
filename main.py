@@ -3,7 +3,7 @@ import time
 import requests
 from google import genai
 from pymongo import MongoClient
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 # --- লাইভ কনসোল লগের জন্য মেমোরি ---
 bot_logs = []
@@ -12,7 +12,6 @@ def add_log(message):
     """লগ মেসেজ লিস্টে যোগ করার ফাংশন"""
     timestamp = time.strftime("%H:%M:%S")
     log_entry = f"[{timestamp}] {message}"
-    # কনসোলে সাথে সাথে প্রিন্ট করার জন্য flush=True দেওয়া হলো
     print(log_entry, flush=True) 
     
     bot_logs.insert(0, log_entry)
@@ -24,11 +23,8 @@ try:
     FACEBOOK_ACCESS_TOKEN = os.environ['FACEBOOK_ACCESS_TOKEN']
     PAGE_ID = os.environ['PAGE_ID']
     GEMINI_API_KEY = os.environ['GEMINI_API_KEY']
-    
-    # Render Environment Variable থেকে MONGO_URI নিবে
-    # আপনি Render এ MONGO_URI নামে ভেরিয়েবল সেট করবেন এবং আপনার লিংকটি ভ্যালু হিসেবে দিবেন
     MONGO_URI = os.environ.get('MONGO_URI') 
-
+    
     RAW_POST_ID = os.environ['POST_ID']
     if "_" not in RAW_POST_ID:
         FULL_POST_ID = f"{PAGE_ID}_{RAW_POST_ID}"
@@ -47,7 +43,6 @@ if MONGO_URI:
         client_mongo = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         db = client_mongo['facebook_bot_db']
         db_collection = db['replied_comments']
-        # কানেকশন চেক
         client_mongo.server_info()
         add_log("✅ Connected to MongoDB successfully!")
     except Exception as e:
@@ -57,17 +52,15 @@ else:
     add_log("⚠️ Warning: MONGO_URI not found. Bot will use temporary memory.")
 
 # --- মেমোরি ফাংশন ---
-processed_memory_set = set() # মংগোডিবি না থাকলে এটি কাজ করবে
+processed_memory_set = set()
 
 def is_comment_processed(comment_id):
-    """চেক করবে এই কমেন্টে আগে রিপ্লাই দেওয়া হয়েছে কিনা"""
     if db_collection is not None:
         return db_collection.find_one({"_id": comment_id}) is not None
     else:
         return comment_id in processed_memory_set
 
 def mark_comment_as_processed(comment_id):
-    """কমেন্ট আইডি সেভ করবে"""
     if db_collection is not None:
         try:
             db_collection.insert_one({
@@ -86,36 +79,42 @@ except Exception as e:
     add_log(f"❌ Gemini Client Error: {e}")
 
 def generate_gemini_reply(comment_text):
-    """Gemini 3 চেষ্টা করবে, না পারলে 2.0 Flash ব্যবহার করবে"""
+    """
+    Gemini 3 চেষ্টা করবে, না পারলে 2.0 Flash ব্যবহার করবে।
+    রিটার্ন করবে: (reply_text, model_name)
+    """
     
-    system_instruction = """You are a helpful AI assistant for a Facebook Page. 
+    # সিস্টেম ইন্সট্রাকশনে মডেলের পরিচয় দিয়ে দিচ্ছি যাতে সে কনফিউজড না হয়
+    system_instruction = """You are a helpful AI assistant for a Facebook Page, powered by Google's advanced Gemini 3 model. 
 Reply to this comment in Bengali. Be friendly, human-like, and keep it within 1-2 sentences.
+If asked about your identity, you can proudly say you are running on Gemini AI.
 If someone asks about price, politely say 'Please inbox us for pricing details'."""
 
-    # প্রথমে Gemini 3.0 বা Experimental মডেল চেষ্টা করি
+    # ১. প্রথমে Gemini 3.0 বা Experimental মডেল চেষ্টা করি
     try:
-        # add_log("🤖 Trying Gemini 3...") 
+        target_model = "gemini-3-pro-preview" # আপনার দেওয়া মডেল নাম
         response = client.models.generate_content(
-            model="gemini-3-pro-preview", # অথবা "gemini-3-pro-preview" যদি আপনার থাকে
+            model=target_model,
             contents=f"{system_instruction}\nUser Comment: {comment_text}"
         )
-        return response.text.strip()
+        # সফল হলে রিপ্লাই এবং মডেলের নাম ফেরত পাঠাবে
+        return response.text.strip(), target_model
     
     except Exception as e:
-        # যদি ৩.০ ফেইল করে, তাহলে ২.০ ফ্ল্যাশ (সবচেয়ে স্টবল) ব্যবহার হবে
-        # add_log(f"⚠️ Gemini 3 failed, switching to Flash: {e}")
+        # ২. যদি ৩.০ ফেইল করে (API error বা access না থাকলে), ফ্ল্যাশ ব্যবহার হবে
+        # add_log(f"⚠️ Gemini 3 Error: {e}. Switching to Flash.") 
         try:
+            fallback_model = "gemini-2.0-flash"
             response = client.models.generate_content(
-                model="gemini-2.0-flash", 
+                model=fallback_model, 
                 contents=f"{system_instruction}\nUser Comment: {comment_text}"
             )
-            return response.text.strip()
+            return response.text.strip(), fallback_model
         except Exception as e2:
             add_log(f"❌ All Gemini Models Failed: {e2}")
-            return "ধন্যবাদ আপনার মন্তব্যের জন্য! 😊"
+            return "ধন্যবাদ আপনার মন্তব্যের জন্য! 😊", "Error-Fallback"
 
 def post_reply_to_comment(comment_id, reply_text):
-    """ফেসবুকে রিপ্লাই পোস্ট করা"""
     url = f"https://graph.facebook.com/v21.0/{comment_id}/comments"
     params = {
         "access_token": FACEBOOK_ACCESS_TOKEN,
@@ -124,7 +123,6 @@ def post_reply_to_comment(comment_id, reply_text):
     try:
         response = requests.post(url, params=params)
         if response.status_code == 200:
-            add_log(f"✅ Replied: {reply_text[:20]}...")
             return True
         else:
             add_log(f"❌ FB API Error: {response.text}")
@@ -134,7 +132,6 @@ def post_reply_to_comment(comment_id, reply_text):
         return False
 
 def run_bot_loop():
-    """মেইন লুপ"""
     if not FULL_POST_ID:
         add_log("⚠️ পোস্ট আইডি নেই, বট কাজ করবে না।")
         return
@@ -144,7 +141,6 @@ def run_bot_loop():
     
     while True:
         try:
-            # ১. কমেন্ট আনা (সাধারণ অর্ডারে)
             url = f"https://graph.facebook.com/v21.0/{FULL_POST_ID}/comments"
             params = {
                 "access_token": FACEBOOK_ACCESS_TOKEN,
@@ -162,26 +158,22 @@ def run_bot_loop():
                     c_msg = comment.get('message', '')
                     c_user = comment.get('from', {}).get('id')
                     
-                    # নিজের কমেন্ট হলে বাদ
                     if c_user == PAGE_ID:
                         continue
                     
-                    # ডাটাবেজে চেক করুন রিপ্লাই দেওয়া হয়েছে কিনা
                     if is_comment_processed(c_id):
                         continue
-
-                    # --- টেস্টিংয়ের জন্য টাইম ফিল্টার অফ রাখা হলো ---
-                    # যাতে আপনি এখনই রিপ্লাই পান। প্রোডাকশনে পরে চালু করতে পারেন।
                     
-                    add_log(f"✨ New Comment Found: {c_msg[:30]}...")
+                    add_log(f"✨ New Comment: {c_msg[:20]}...")
                     
-                    # রিপ্লাই জেনারেট
-                    reply = generate_gemini_reply(c_msg)
+                    # রিপ্লাই এবং মডেলের নাম রিসিভ করছি
+                    reply_text, used_model = generate_gemini_reply(c_msg)
                     
-                    # রিপ্লাই পোস্ট
-                    if post_reply_to_comment(c_id, reply):
+                    if post_reply_to_comment(c_id, reply_text):
+                        # কনসোলে মডেলের নামসহ লগ দেখাবে
+                        add_log(f"✅ [{used_model}] Replied: {reply_text[:20]}...")
                         mark_comment_as_processed(c_id)
-                        time.sleep(5) # সেফটি ডিলে
+                        time.sleep(5)
                     
             else:
                 add_log(f"❌ Facebook API Error: {resp.text}")
@@ -189,5 +181,4 @@ def run_bot_loop():
         except Exception as e:
             add_log(f"⚠️ Loop Error: {e}")
             
-        # ১০ সেকেন্ড অপেক্ষা (ফাস্ট রেসপন্সের জন্য সময় কমানো হলো)
         time.sleep(10)
