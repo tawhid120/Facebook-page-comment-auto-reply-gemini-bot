@@ -1,14 +1,27 @@
 import os
 import time
 import requests
-from google import genai 
+from google import genai
+
+# --- লাইভ কনসোল লগের জন্য মেমোরি ---
+bot_logs = []
+
+def add_log(message):
+    """লগ মেসেজ লিস্টে যোগ করার ফাংশন"""
+    timestamp = time.strftime("%H:%M:%S")
+    log_entry = f"[{timestamp}] {message}"
+    print(log_entry) # সার্ভার কনসোলে দেখাবে
+    
+    # ওয়েবসাইটে দেখানোর জন্য শুরুতে যোগ করছি
+    bot_logs.insert(0, log_entry)
+    if len(bot_logs) > 100: # মেমোরি বাঁচাতে ১০০টার বেশি লগ রাখব না
+        bot_logs.pop()
 
 # --- কনফিগারেশন ---
 try:
     FACEBOOK_ACCESS_TOKEN = os.environ['FACEBOOK_ACCESS_TOKEN']
     PAGE_ID = os.environ['PAGE_ID']
     
-    # পোস্ট আইডি ঠিক করা (PAGE_ID_POST_ID ফরম্যাট)
     RAW_POST_ID = os.environ['POST_ID']
     if "_" not in RAW_POST_ID:
         FULL_POST_ID = f"{PAGE_ID}_{RAW_POST_ID}"
@@ -17,24 +30,24 @@ try:
         
     GEMINI_API_KEY = os.environ['GEMINI_API_KEY']
 except KeyError as e:
-    print(f"❌ Error: Environment Variable {e} পাওয়া যাচ্ছে না!")
+    add_log(f"❌ Error: Environment Variable {e} missing!")
     FULL_POST_ID = None
 
-# --- Gemini 2.0 সেটআপ (সবচেয়ে শক্তিশালী) ---
-# নতুন SDK ব্যবহার করছি যাতে ফিউচার প্রুফ হয়
-client = genai.Client(api_key=GEMINI_API_KEY)
+# --- Gemini 2.0 সেটআপ (New SDK) ---
+try:
+    client = genai.Client(api_key=GEMINI_API_KEY)
+except Exception as e:
+    add_log(f"❌ Gemini Client Error: {e}")
 
 def generate_gemini_reply(comment_text):
-    """Gemini 2.0 দিয়ে রিপ্লাই তৈরি"""
+    """Gemini 2.0 দিয়ে রিপ্লাই তৈরি"""
     try:
         prompt = f"""You are a helpful AI assistant for a Facebook Page. 
 Reply to this comment in Bengali, be friendly and concise.
 If someone asks about price, say 'Please inbox us for pricing details'.
-Do not reply to offensive comments.
-
 User Comment: {comment_text}"""
         
-        # gemini-2.0-flash মডেল ব্যবহার করা হচ্ছে
+        # নতুন SDK ব্যবহার হচ্ছে
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
             contents=prompt
@@ -42,7 +55,7 @@ User Comment: {comment_text}"""
         return response.text.strip()
     
     except Exception as e:
-        print(f"❌ Gemini Error: {e}")
+        add_log(f"❌ Gemini Error: {e}")
         return "ধন্যবাদ আপনার মন্তব্যের জন্য! 😊"
 
 def post_reply_to_comment(comment_id, reply_text):
@@ -55,25 +68,25 @@ def post_reply_to_comment(comment_id, reply_text):
     try:
         response = requests.post(url, params=params)
         if response.status_code == 200:
-            print(f"✅ Successfully replied to {comment_id}")
+            add_log(f"✅ Replied to {comment_id}")
             return True
         else:
-            print(f"❌ Failed to reply: {response.text}")
+            add_log(f"❌ FB Error: {response.text}")
             return False
     except Exception as e:
-        print(f"Network Error: {e}")
+        add_log(f"Network Error: {e}")
         return False
 
 # --- প্রসেসড কমেন্ট ট্র্যাক করার সেট ---
 processed_comment_ids = set()
 
 def run_bot_loop():
-    """এই ফাংশনটিই app.py চালাবে"""
+    """এই ফাংশনটি app.py চালাবে"""
     if not FULL_POST_ID:
-        print("⚠️ পোস্ট আইডি নেই, বট কাজ করবে না।")
+        add_log("⚠️ পোস্ট আইডি নেই, বট কাজ করবে না।")
         return
 
-    print(f"🚀 Facebook Gemini Bot Started! Monitoring: {FULL_POST_ID}")
+    add_log(f"🚀 Powerful Gemini Bot Started! Monitoring: {FULL_POST_ID}")
     
     while True:
         try:
@@ -89,7 +102,7 @@ def run_bot_loop():
             
             if resp.status_code == 200:
                 data = resp.json().get('data', [])
-                print(f"🔍 Checking... Found {len(data)} comments")
+                add_log(f"🔍 Checking... Found {len(data)} comments")
                 
                 for comment in data:
                     c_id = comment.get('id')
@@ -100,7 +113,7 @@ def run_bot_loop():
                     if c_id in processed_comment_ids or c_user == PAGE_ID:
                         continue
                         
-                    print(f"✨ New Comment: {c_msg[:30]}...")
+                    add_log(f"✨ New Comment: {c_msg[:30]}...")
                     
                     # রিপ্লাই জেনারেট এবং পোস্ট
                     reply = generate_gemini_reply(c_msg)
@@ -109,11 +122,12 @@ def run_bot_loop():
                     
                     time.sleep(2) # স্প্যামিং এড়াতে
             else:
-                print(f"❌ Facebook API Error: {resp.text}")
+                add_log(f"❌ Facebook API Error: {resp.text}")
                 
         except Exception as e:
-            print(f"⚠️ Loop Error: {e}")
+            add_log(f"⚠️ Loop Error: {e}")
             
         # ৩০ সেকেন্ড অপেক্ষা
         time.sleep(30)
+
 
