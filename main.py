@@ -96,7 +96,7 @@ If someone asks about price, politely say 'Please inbox us for pricing details'.
     try:
         # add_log("🤖 Trying Gemini 3...") 
         response = client.models.generate_content(
-            model="gemini-2.0-flash-thinking-exp", # অথবা "gemini-3-pro-preview" যদি আপনার থাকে
+            model="gemini-3-pro-preview", # অথবা "gemini-3-pro-preview" যদি আপনার থাকে
             contents=f"{system_instruction}\nUser Comment: {comment_text}"
         )
         return response.text.strip()
