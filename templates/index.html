@@ -6,55 +6,312 @@
     <title>Tawhid's AI Console</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: monospace; }
-        .log-entry { animation: fadeIn 0.3s ease-in-out; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Animated Gradient Background */
+        .animated-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px) scale(1.5); opacity: 0; }
+        }
+
+        .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 60px; height: 60px; left: 25%; animation-delay: 3s; }
+        .particle:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-delay: 6s; }
+        .particle:nth-child(4) { width: 70px; height: 70px; left: 70%; animation-delay: 9s; }
+        .particle:nth-child(5) { width: 90px; height: 90px; left: 85%; animation-delay: 12s; }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 8s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        /* Neon Glow Effect */
+        .neon-glow {
+            box-shadow: 
+                0 0 5px rgba(102, 126, 234, 0.5),
+                0 0 20px rgba(102, 126, 234, 0.3),
+                0 0 40px rgba(102, 126, 234, 0.2);
+        }
+
+        /* Gradient Buttons */
+        .gradient-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .gradient-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .gradient-btn:hover::before {
+            left: 100%;
+        }
+
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .gradient-btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        /* Log Entry Animation */
+        .log-entry {
+            animation: slideInRight 0.4s ease-out;
+            padding: 8px 12px;
+            border-left: 3px solid transparent;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .log-entry:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        @keyframes slideInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(-20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+
+        /* Custom Scrollbar */
+        #console-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #console-box::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        #console-box::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        #console-box::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        /* Pulsing Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Spinning Animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spin {
+            animation: spin 3s linear infinite;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Header Gradient */
+        .header-gradient {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Info Section Gradient */
+        .info-gradient {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(240, 147, 251, 0.15) 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Console Background */
+        .console-bg {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(30, 30, 60, 0.4) 100%);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Traffic Light Buttons */
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px currentColor;
+        }
+
+        /* Icon Rotation */
+        .rotate-icon {
+            animation: spin 2s linear infinite;
+        }
+
+        /* Font Mono */
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Glow Text */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.8),
+                         0 0 20px rgba(102, 126, 234, 0.6),
+                         0 0 30px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col items-center justify-center text-gray-200 p-4">
+<body class="animated-bg h-screen flex flex-col items-center justify-center p-4 relative">
 
-    <div class="w-full max-w-4xl bg-gray-900/80 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-gray-700">
+    <!-- Floating Particles -->
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+
+    <!-- Main Container -->
+    <div class="w-full max-w-5xl glass-card neon-glow rounded-2xl overflow-hidden flex flex-col h-[90vh] transform transition-all duration-500 hover:scale-[1.01]">
         
         <!-- Header -->
-        <div class="bg-black/50 p-4 flex justify-between items-center border-b border-gray-700">
-            <div class="flex items-center gap-3">
-                <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
-                <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                <span class="ml-2 font-bold text-blue-400 tracking-wider">GEMINI MODELS</span>
+        <div class="header-gradient p-5 flex justify-between items-center border-b border-white/10">
+            <div class="flex items-center gap-4">
+                <div class="flex gap-2">
+                    <span class="traffic-light bg-red-500"></span>
+                    <span class="traffic-light bg-yellow-500"></span>
+                    <span class="traffic-light bg-green-500"></span>
+                </div>
+                <div class="h-6 w-px bg-white/20"></div>
+                <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 tracking-wider text-lg glow-text">
+                    ⚡ GEMINI AI MODELS
+                </span>
             </div>
-            <div class="text-xs text-green-400 flex items-center gap-2">
-                <i class="fa-solid fa-satellite-dish fa-spin"></i> LIVE
+            <div class="flex items-center gap-3">
+                <span class="status-badge px-4 py-1.5 rounded-full text-white text-xs font-bold flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-circle text-[6px]"></i>
+                    ONLINE
+                </span>
+                <i class="fa-solid fa-satellite-dish text-green-400 rotate-icon text-lg"></i>
             </div>
         </div>
 
         <!-- Info & Links -->
-        <div class="p-6 text-center bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700">
-            <h1 class="text-2xl font-bold text-white mb-1">Tawhid's AI Agent</h1>
-            <p class="text-xs text-gray-400 mb-4">Powered by Google GenAI SDK</p>
+        <div class="info-gradient p-8 text-center border-b border-white/10">
+            <h1 class="text-4xl font-extrabold gradient-text mb-2 tracking-tight">
+                Tawhid's AI Agent
+            </h1>
+            <p class="text-sm text-gray-200/80 mb-6 font-medium">
+                ⚡ Powered by Google GenAI SDK • Real-time Intelligence
+            </p>
             
-            <div class="flex justify-center gap-4">
+            <div class="flex justify-center gap-4 flex-wrap">
                 <a href="https://www.facebook.com/profile.php?id={{ page_id }}" target="_blank" 
-                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs font-bold text-white transition">
+                   class="gradient-btn px-6 py-3 rounded-xl text-sm font-bold text-white shadow-xl flex items-center gap-2 transform transition">
+                   <i class="fab fa-facebook-f"></i>
                    Facebook Page
                 </a>
                 <a href="https://github.com/tawhid120" target="_blank" 
-                   class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold text-white transition">
+                   class="gradient-btn gradient-btn-secondary px-6 py-3 rounded-xl text-sm font-bold text-white shadow-xl flex items-center gap-2 transform transition">
+                   <i class="fab fa-github"></i>
                    GitHub Repo
                 </a>
             </div>
         </div>
 
         <!-- Live Console -->
-        <div class="flex-1 p-4 overflow-hidden flex flex-col bg-black/40">
-            <div class="flex justify-between items-center mb-2">
-                <div class="text-xs text-gray-500 uppercase tracking-wider">System Logs</div>
-                <div class="text-[10px] text-gray-600">Auto-refreshing...</div>
+        <div class="flex-1 p-6 overflow-hidden flex flex-col console-bg">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-green-400 pulse"></div>
+                    <span class="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400 uppercase tracking-wider">
+                        System Logs
+                    </span>
+                </div>
+                <div class="text-xs text-gray-300/60 flex items-center gap-2 font-mono">
+                    <i class="fa-solid fa-sync rotate-icon text-[10px]"></i>
+                    Auto-refreshing every 2s
+                </div>
             </div>
             
-            <div id="console-box" class="flex-1 overflow-y-auto font-mono text-xs sm:text-sm space-y-1 pr-2 text-green-300">
-                <div class="text-gray-500">Initializing connection to server...</div>
+            <div id="console-box" class="flex-1 overflow-y-auto font-mono text-sm space-y-1 pr-2">
+                <div class="text-gray-400 log-entry border-l-blue-400">
+                    <i class="fa-solid fa-circle-notch fa-spin mr-2"></i>
+                    Initializing connection to server...
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="header-gradient px-6 py-3 border-t border-white/10 flex justify-between items-center text-xs text-gray-300/80">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-green-400"></i>
+                <span class="font-mono">Secure Connection</span>
+            </div>
+            <div class="font-mono">
+                <span class="text-gray-400">v2.0.1</span>
             </div>
         </div>
     </div>
@@ -68,7 +325,12 @@
                     consoleBox.innerHTML = ''; 
                     
                     if(data.length === 0) {
-                        consoleBox.innerHTML = '<div class="text-gray-500">Waiting for logs...</div>';
+                        consoleBox.innerHTML = `
+                            <div class="text-gray-400 log-entry border-l-yellow-400">
+                                <i class="fa-solid fa-clock mr-2"></i>
+                                Waiting for logs...
+                            </div>
+                        `;
                         return;
                     }
 
@@ -76,17 +338,27 @@
                         const div = document.createElement('div');
                         div.className = 'log-entry';
                         
-                        if(log.includes('❌')) div.className += ' text-red-400';
-                        else if(log.includes('✅')) div.className += ' text-green-400 font-bold';
-                        else if(log.includes('✨')) div.className += ' text-yellow-300';
-                        else if(log.includes('🔍')) div.className += ' text-blue-300';
-                        else div.className += ' text-gray-300';
+                        if(log.includes('❌')) {
+                            div.className += ' text-red-400 border-l-red-500 bg-red-500/5';
+                        } else if(log.includes('✅')) {
+                            div.className += ' text-green-400 font-semibold border-l-green-500 bg-green-500/5';
+                        } else if(log.includes('✨')) {
+                            div.className += ' text-yellow-300 border-l-yellow-500 bg-yellow-500/5';
+                        } else if(log.includes('🔍')) {
+                            div.className += ' text-blue-400 border-l-blue-500 bg-blue-500/5';
+                        } else {
+                            div.className += ' text-gray-300 border-l-gray-600';
+                        }
 
                         div.textContent = log;
                         consoleBox.appendChild(div);
                     });
+
+                    // Auto-scroll to bottom
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
                 });
         }
+        
         setInterval(fetchLogs, 2000);
         fetchLogs();
     </script>
