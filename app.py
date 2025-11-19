@@ -1,16 +1,20 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from threading import Thread
-from main import run_bot_loop
+# main.py থেকে run_bot_loop এবং bot_logs ইমপোর্ট করছি
+from main import run_bot_loop, bot_logs
 
-# Flask অ্যাপ তৈরি, টেমপ্লেট ফোল্ডার দেখিয়ে দেওয়া হলো
 app = Flask(__name__, template_folder='templates')
 
 @app.route('/')
 def home():
-    # পরিবেশ ভেরিয়েবল থেকে পেজ আইডি নিয়ে HTML-এ পাঠাবে
-    page_id = os.environ.get('PAGE_ID', 'YOUR_PAGE_ID')
+    page_id = os.environ.get('PAGE_ID', '#')
     return render_template('index.html', page_id=page_id)
+
+# লাইভ কনসোল আপডেট করার জন্য API
+@app.route('/api/logs')
+def get_logs():
+    return jsonify(bot_logs)
 
 def start_background_bot():
     try:
@@ -18,7 +22,7 @@ def start_background_bot():
     except Exception as e:
         print(f"Bot Crash: {e}")
 
-# সার্ভার চালু হওয়ার সাথে সাথে বট ব্যাকগ্রাউন্ডে চলবে
+# সার্ভার চালু হওয়ার সাথে সাথে ব্যাকগ্রাউন্ডে বট চালু হবে
 t = Thread(target=start_background_bot)
 t.daemon = True
 t.start()
