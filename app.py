@@ -1,14 +1,16 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from threading import Thread
-# main.py থেকে run_bot_loop ইমপোর্ট করছি (এখন আর এরর দেবে না)
 from main import run_bot_loop
 
-app = Flask(__name__)
+# Flask অ্যাপ তৈরি, টেমপ্লেট ফোল্ডার দেখিয়ে দেওয়া হলো
+app = Flask(__name__, template_folder='templates')
 
 @app.route('/')
 def home():
-    return "🤖 Powerful Gemini Bot is Running 24/7!"
+    # পরিবেশ ভেরিয়েবল থেকে পেজ আইডি নিয়ে HTML-এ পাঠাবে
+    page_id = os.environ.get('PAGE_ID', 'YOUR_PAGE_ID')
+    return render_template('index.html', page_id=page_id)
 
 def start_background_bot():
     try:
@@ -16,14 +18,13 @@ def start_background_bot():
     except Exception as e:
         print(f"Bot Crash: {e}")
 
-# সার্ভার অন হওয়ার সাথে সাথে ব্যাকগ্রাউন্ড থ্রেড চালু হবে
+# সার্ভার চালু হওয়ার সাথে সাথে বট ব্যাকগ্রাউন্ডে চলবে
 t = Thread(target=start_background_bot)
 t.daemon = True
 t.start()
 
 if __name__ == "__main__":
-    # Render এর পোর্ট লজিক
     port = int(os.environ.get("PORT", 10000))
-    # host='0.0.0.0' দেওয়া বাধ্যতামূলক যাতে Render পোর্ট ডিটেক্ট করতে পারে
     app.run(host='0.0.0.0', port=port)
+
 
