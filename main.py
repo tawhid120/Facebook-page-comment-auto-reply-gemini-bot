@@ -82,7 +82,7 @@ User Comment: {comment_text}"""
         # যদি 3-pro-preview আপনার অ্যাকাউন্টে চালু না থাকে, তবে এটি অটোমেটিক ফলব্যাক করবে বা এরর দিবে।
         # সেই ক্ষেত্রে 'gemini-2.0-flash' ব্যবহার করা নিরাপদ।
         response = client.models.generate_content(
-            model="gemini-2.0-flash", # অথবা "gemini-3-pro-preview" যদি আপনার এক্সেস থাকে
+            model="gemini-3-pro-preview", # অথবা "gemini-3-pro-preview" যদি আপনার এক্সেস থাকে
             contents=prompt
         )
         return response.text.strip()
